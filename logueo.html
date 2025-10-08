@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inicio de Sesión | App de Fichaje</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F0F073;
+            background-image: linear-gradient(to top right, #F0E173, #BCF073);
+        }
+        .form-container {
+            background-color: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            transition: all 0.3s ease-in-out;
+        }
+        .btn-primary {
+            background-color: #87F073;
+            color: #1f2937;
+            font-weight: 600;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+        .btn-primary:hover {
+            background-color: #76d964;
+            transform: translateY(-2px);
+        }
+        .btn-primary:disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .input-field {
+            background-color: #f3f4f6;
+            border: 2px solid transparent;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        .input-field:focus {
+            border-color: #87F073;
+            box-shadow: 0 0 0 3px rgba(135, 240, 115, 0.4);
+            outline: none;
+        }
+        .form-section { display: none; }
+        .form-section.active { display: block; }
+        .error-message {
+            color: #dc2626;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+            text-align: left;
+            display: none;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen">
+
+    <div class="form-container w-full max-w-md p-8 space-y-6">
+
+        <!-- Login Form -->
+        <div id="login-section" class="form-section active">
+            <div class="text-center">
+                <h1 class="text-3xl font-bold text-gray-900">Bienvenido de Nuevo</h1>
+                <p class="mt-2 text-gray-600">Inicia sesión para acceder a tu dashboard.</p>
+            </div>
+            <form id="login-form" class="mt-8 space-y-6">
+                <div>
+                    <input id="login-email" name="email" type="email" required class="input-field w-full px-4 py-3 rounded-lg" placeholder="Correo Electrónico">
+                </div>
+                <div>
+                    <input id="login-password" name="password" type="password" required class="input-field w-full px-4 py-3 rounded-lg" placeholder="Contraseña">
+                </div>
+                <p id="login-error" class="error-message"></p>
+                <div class="flex items-center justify-between">
+                    <a href="#" id="forgot-password-link" class="font-medium text-lime-700 hover:text-lime-600">¿Olvidó su contraseña?</a>
+                </div>
+                <div>
+                    <button type="submit" class="w-full btn-primary py-3 px-4 rounded-lg">Iniciar Sesión</button>
+                </div>
+            </form>
+            <p class="mt-6 text-center text-sm text-gray-600">
+                ¿No tienes una cuenta?
+                <a href="#" id="register-link" class="font-medium text-lime-700 hover:text-lime-600">Regístrate aquí</a>
+            </p>
+        </div>
+
+        <!-- Registration Form -->
+        <div id="register-section" class="form-section">
+            <div class="text-center">
+                <h1 class="text-3xl font-bold text-gray-900">Crear una Cuenta</h1>
+                <p class="mt-2 text-gray-600">Completa tus datos para registrarte.</p>
+            </div>
+            <form id="register-form" class="mt-8 space-y-6">
+                <input id="register-name" name="name" type="text" required class="input-field w-full px-4 py-3 rounded-lg" placeholder="Nombre Completo">
+                <input id="register-email" name="email" type="email" required class="input-field w-full px-4 py-3 rounded-lg" placeholder="Correo Electrónico">
+                <input id="register-password" name="password" type="password" required class="input-field w-full px-4 py-3 rounded-lg" placeholder="Contraseña">
+                <p id="register-error" class="error-message"></p>
+                <button type="submit" class="w-full btn-primary py-3 px-4 rounded-lg">Crear Cuenta</button>
+            </form>
+            <p class="mt-6 text-center text-sm text-gray-600">
+                ¿Ya tienes una cuenta?
+                <a href="#" id="back-to-login-link1" class="font-medium text-lime-700 hover:text-lime-600">Inicia sesión</a>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const API_URL = 'http://localhost:3000';
+            const sections = {
+                login: document.getElementById('login-section'),
+                register: document.getElementById('register-section')
+            };
+            const forms = {
+                login: document.getElementById('login-form'),
+                register: document.getElementById('register-form')
+            };
+            const errorMessages = {
+                login: document.getElementById('login-error'),
+                register: document.getElementById('register-error')
+            };
+
+            function showSection(name) {
+                Object.values(sections).forEach(s => s.classList.remove('active'));
+                sections[name].classList.add('active');
+            }
+
+            function displayError(form, msg) {
+                if (msg.includes('Failed to fetch')) msg = 'No se pudo conectar con el servidor. ¿Está en ejecución?';
+                errorMessages[form].textContent = msg;
+                errorMessages[form].style.display = 'block';
+            }
+
+            function clearErrors() {
+                Object.values(errorMessages).forEach(e => { e.textContent = ''; e.style.display = 'none'; });
+            }
+
+            function toggleButtonLoading(btn, load, text) {
+                btn.disabled = load;
+                btn.textContent = load ? 'Procesando...' : text;
+            }
+
+            document.getElementById('register-link').onclick = e => { e.preventDefault(); showSection('register'); };
+            document.getElementById('back-to-login-link1').onclick = e => { e.preventDefault(); showSection('login'); };
+
+            // === NUEVO CÓDIGO CON LÓGICA DE ROLES ===
+            forms.login.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                clearErrors();
+                const button = e.target.querySelector('button[type="submit"]');
+                const originalText = button.textContent;
+                toggleButtonLoading(button, true, originalText);
+
+                const formData = new FormData(e.target);
+                const data = Object.fromEntries(formData.entries());
+
+                try {
+                    const response = await fetch(`${API_URL}/login`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                    const result = await response.json();
+                    if (!response.ok) throw new Error(result.message);
+
+                    localStorage.setItem('authToken', result.token);
+
+                    // Redirección según el rol recibido
+                    if (result.role === 'administrador') {
+                        window.location.href = 'dashboard_admin.html';
+                    } else {
+                        window.location.href = 'dashboard_empleado.html';
+                    }
+                } catch (error) {
+                    displayError('login', error.message);
+                } finally {
+                    toggleButtonLoading(button, false, originalText);
+                }
+            });
+
+            forms.register.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                clearErrors();
+                const button = e.target.querySelector('button[type="submit"]');
+                const originalText = button.textContent;
+                toggleButtonLoading(button, true, originalText);
+
+                const formData = new FormData(e.target);
+                const data = Object.fromEntries(formData.entries());
+
+                try {
+                    const response = await fetch(`${API_URL}/register`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                    const result = await response.json();
+                    if (!response.ok) throw new Error(result.message);
+
+                    alert('Registro exitoso. Ahora puedes iniciar sesión.');
+                    showSection('login');
+                } catch (error) {
+                    displayError('register', error.message);
+                } finally {
+                    toggleButtonLoading(button, false, originalText);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
+
